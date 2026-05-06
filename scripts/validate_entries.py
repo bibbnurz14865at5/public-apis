@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""Validate entries in the public APIs README.md file."""
+
+import re
+import sys
+from typing import List, Tuple
+
+README_PATH = "README.md"
+
+# Expected table header format
+TABLE_HEADER = "| API | Description | Auth | HTTPS | CORS |"
+TABLE_SEPARATOR = "|---|---|---|---|---|"
+
+VALID_AUTH_VALUES = {"", "apiKey", "OAuth", "X-Mashape-Key", "No"}
+VALID_HTTPS_VALUES = {"Yes", "No"}
+VALID_CORS_VALUES = {"Yes", "No", "Unknown"}
+
+
+def parse_table_rows(content: str) -> List[Tuple[int, List[str]]]:
+    """Extract table rows from README content with line numbers."""
+    rows = []
+    for line_num, line in enumerate(content.splitlines(), start=1):
+        line = line.strip()
+        if line.startswith("|") and line.endswith("|"):
+            cells = [cell.strip() for cell in line.split("|")[1:-1]]
+            if len(cells) == 5 and cells[0] not in ("", "API", "---"):
+                rows.append((line_num, cells))
+    return rows
+
+
+def validate_row(line_num: int, cells: List[str]) -> List[str]:
+    """Validate a single table row and return list of error messages."""
+    errors = []
+    api_name, description, auth, https, cors = cells
+
+    if not api_name:
+        errors.append(f"Line {line_num}: API name is empty.")
+
+    if not description:
+        errors.append(f"Line {line_num}: Description is empty for '{api_name}'.")
+
+    # Strip markdown link from auth if present
+    auth_clean = re.sub(r"\[.*?\]\(.*?\)", "", auth).strip()
+    if auth_clean not in VALID_AUTH_VALUES:
+        errors.append(
+            f"Line {line_num}: Invalid Auth value '{auth}' for '{api_name}'. "
+            f"Expected one of: {VALID_AUTH_VALUES}"
+        )
+
+    if https not in VALID_HTTPS_VALUES:
+        errors.append(
+            f"Line {line_num}: Invalid HTTPS value '{https}' for '{api_name}'. "
+            f"Expected one of: {VALID_HTTPS_VALUES}"
+        )
+
+    if cors not in VALID_CORS_VALUES:
+        errors.append(
+            f"Line {line_num}: Invalid CORS value '{cors}' for '{api_name}'. "
+            f"Expected one of: {VALID_CORS_VALUES}"
+        )
+
+    return errors
+
+
+def validate_readme(path: str = README_PATH) -> int:
+    """Validate all entries in the README. Returns number of errors found."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except FileNotFoundError:
+        print(f"ERROR: File not found: {path}")
+        return 1
+
+    rows = parse_table_rows(content)
+    all_errors = []
+
+    for line_num, cells in rows:
+        errors = validate_row(line_num, cells)
+        all_errors.extend(errors)
+
+    if all_errors:
+        for error in all_errors:
+            print(error)
+        print(f"\nValidation failed with {len(all_errors)} error(s).")
+        return len(all_errors)
+
+    print(f"Validation passed. {len(rows)} entries checked.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(validate_readme())
