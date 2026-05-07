@@ -11,6 +11,8 @@ README_PATH = "README.md"
 TABLE_HEADER = "| API | Description | Auth | HTTPS | CORS |"
 TABLE_SEPARATOR = "|---|---|---|---|---|"
 
+# Note: "No" is listed here as a valid auth value but in practice entries use
+# an empty string to indicate no auth. "No" appears to be a legacy value.
 VALID_AUTH_VALUES = {"", "apiKey", "OAuth", "X-Mashape-Key", "No"}
 VALID_HTTPS_VALUES = {"Yes", "No"}
 VALID_CORS_VALUES = {"Yes", "No", "Unknown"}
@@ -38,6 +40,12 @@ def validate_row(line_num: int, cells: List[str]) -> List[str]:
 
     if not description:
         errors.append(f"Line {line_num}: Description is empty for '{api_name}'.")
+
+    # Check description doesn't end with a period (style consistency)
+    if description.endswith("."):
+        errors.append(
+            f"Line {line_num}: Description for '{api_name}' should not end with a period."
+        )
 
     # Strip markdown link from auth if present
     auth_clean = re.sub(r"\[.*?\]\(.*?\)", "", auth).strip()
