@@ -17,7 +17,7 @@ from typing import List, Tuple
 README_PATH = "README.md"
 REQUEST_TIMEOUT = 15  # seconds; increased from 10 to reduce false negatives on slow APIs
 MAX_WORKERS = 10
-RETRY_COUNT = 2
+RETRY_COUNT = 3  # bumped from 2 to 3 since some APIs are flaky on first attempt
 
 # HTTP status codes considered valid
 VALID_STATUS_CODES = set(range(200, 400))  # 2xx and 3xx
@@ -86,5 +86,4 @@ def check_url(name: str, url: str, retries: int = RETRY_COUNT) -> Tuple[str, str
                 time.sleep(1)
                 continue
             return (name, url, False, f"URLError: {e.reason}")
-        except Exception as e:
-            if attempt < retries:
+       
