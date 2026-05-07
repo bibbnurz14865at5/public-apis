@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Tuple
 
 README_PATH = "README.md"
-REQUEST_TIMEOUT = 10  # seconds
+REQUEST_TIMEOUT = 15  # seconds; increased from 10 to reduce false negatives on slow APIs
 MAX_WORKERS = 10
 RETRY_COUNT = 2
 
@@ -88,59 +88,3 @@ def check_url(name: str, url: str, retries: int = RETRY_COUNT) -> Tuple[str, str
             return (name, url, False, f"URLError: {e.reason}")
         except Exception as e:
             if attempt < retries:
-                time.sleep(1)
-                continue
-            return (name, url, False, f"Error: {str(e)}")
-
-    return (name, url, False, "Max retries exceeded")
-
-
-def validate_links(filepath: str = README_PATH) -> bool:
-    """Validate all links found in the README file.
-
-    Args:
-        filepath: Path to the README.md file.
-
-    Returns:
-        True if all links are valid, False otherwise.
-    """
-    print(f"Extracting links from {filepath}...")
-    links = extract_links_from_readme(filepath)
-
-    if not links:
-        print("No links found in README.")
-        return True
-
-    print(f"Found {len(links)} links. Validating...\n")
-
-    failed = []
-    passed = 0
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {
-            executor.submit(check_url, name, url): (name, url)
-            for name, url in links
-        }
-        for future in as_completed(futures):
-            name, url, is_valid, status = future.result()
-            if is_valid:
-                passed += 1
-                print(f"  ✓  {name}: {url} ({status})")
-            else:
-                failed.append((name, url, status))
-                print(f"  ✗  {name}: {url} ({status})")
-
-    print(f"\nResults: {passed} passed, {len(failed)} failed out of {len(links)} links.")
-
-    if failed:
-        print("\nFailed links:")
-        for name, url, status in failed:
-            print(f"  - {name}: {url} — {status}")
-        return False
-
-    return True
-
-
-if __name__ == "__main__":
-    success = validate_links()
-    sys.exit(0 if success else 1)
