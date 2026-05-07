@@ -95,3 +95,14 @@ def test_validate_readme_with_invalid_content(tmp_path):
     readme.write_text(INVALID_CONTENT, encoding="utf-8")
     result = validate_readme(str(readme))
     assert result > 0
+
+
+# NOTE: Added to verify that both invalid rows in INVALID_CONTENT are caught,
+# not just the first one. Useful sanity check when modifying validate_readme.
+def test_validate_readme_invalid_content_catches_multiple_errors(tmp_path):
+    readme = tmp_path / "README.md"
+    readme.write_text(INVALID_CONTENT, encoding="utf-8")
+    # INVALID_CONTENT has two bad rows: one with bad field values and one with
+    # an empty API name, so we expect at least 2 errors reported.
+    result = validate_readme(str(readme))
+    assert result >= 2
