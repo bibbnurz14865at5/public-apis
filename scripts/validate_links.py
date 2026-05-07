@@ -77,6 +77,9 @@ def check_url(name: str, url: str, retries: int = RETRY_COUNT) -> Tuple[str, str
         except urllib.error.HTTPError as e:
             if e.code in VALID_STATUS_CODES:
                 return (name, url, True, f"HTTP {e.code}")
+            # 405 means HEAD isn't allowed but the server is reachable; treat as valid
+            if e.code == 405:
+                return (name, url, True, f"HTTP {e.code} (HEAD not allowed, but reachable)")
             if attempt < retries:
                 time.sleep(1)
                 continue
@@ -85,5 +88,4 @@ def check_url(name: str, url: str, retries: int = RETRY_COUNT) -> Tuple[str, str
             if attempt < retries:
                 time.sleep(1)
                 continue
-            return (name, url, False, f"URLError: {e.reason}")
-       
+     
