@@ -47,6 +47,13 @@ def validate_row(line_num: int, cells: List[str]) -> List[str]:
             f"Line {line_num}: Description for '{api_name}' should not end with a period."
         )
 
+    # Also flag descriptions that end with an exclamation mark or question mark
+    # since those feel out of place in a reference table too
+    if description.endswith("!") or description.endswith("?"):
+        errors.append(
+            f"Line {line_num}: Description for '{api_name}' should not end with punctuation."
+        )
+
     # Strip markdown link from auth if present
     auth_clean = re.sub(r"\[.*?\]\(.*?\)", "", auth).strip()
     if auth_clean not in VALID_AUTH_VALUES:
@@ -87,14 +94,4 @@ def validate_readme(path: str = README_PATH) -> int:
         all_errors.extend(errors)
 
     if all_errors:
-        for error in all_errors:
-            print(error)
-        print(f"\nValidation failed with {len(all_errors)} error(s).")
-        return len(all_errors)
-
-    print(f"Validation passed. {len(rows)} entries checked.")
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(validate_readme())
+        f
