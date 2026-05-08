@@ -22,6 +22,10 @@ RETRY_COUNT = 3  # bumped from 2 to 3 since some APIs are flaky on first attempt
 # HTTP status codes considered valid
 VALID_STATUS_CODES = set(range(200, 400))  # 2xx and 3xx
 
+# Additional status codes to treat as valid beyond 2xx/3xx.
+# 401 and 403 mean the server is up but requires auth — the link itself is fine.
+EXTRA_VALID_STATUS_CODES = {401, 403}
+
 
 def extract_links_from_readme(filepath: str) -> List[Tuple[str, str]]:
     """Extract all hyperlinks from table rows in the README.
@@ -80,12 +84,9 @@ def check_url(name: str, url: str, retries: int = RETRY_COUNT) -> Tuple[str, str
             # 405 means HEAD isn't allowed but the server is reachable; treat as valid
             if e.code == 405:
                 return (name, url, True, f"HTTP {e.code} (HEAD not allowed, but reachable)")
+            # Auth-gated endpoints are still live links
+            if e.code in EXTRA_VALID_STATUS_CODES:
+                return (name, url, True, f"HTTP {e.code} (auth required, but reachable)")
             if attempt < retries:
                 time.sleep(1)
-                continue
-            return (name, url, False, f"HTTP {e.code}")
-        except urllib.error.URLError as e:
-            if attempt < retries:
-                time.sleep(1)
-                continue
-     
+        
