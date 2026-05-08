@@ -104,6 +104,6 @@ def test_validate_readme_invalid_content_catches_multiple_errors(tmp_path):
     readme.write_text(INVALID_CONTENT, encoding="utf-8")
     # INVALID_CONTENT has two bad rows: one with invalid Auth/HTTPS/CORS values
     # and one with an empty API name. We expect at least 2 errors total.
-    # (validate_readme returns the count of errors found)
+    # This ensures validate_readme doesn't short-circuit on the first failure.
     result = validate_readme(str(readme))
     assert result >= 2
