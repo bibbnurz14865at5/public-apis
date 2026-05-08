@@ -24,7 +24,9 @@ VALID_STATUS_CODES = set(range(200, 400))  # 2xx and 3xx
 
 # Additional status codes to treat as valid beyond 2xx/3xx.
 # 401 and 403 mean the server is up but requires auth — the link itself is fine.
-EXTRA_VALID_STATUS_CODES = {401, 403}
+# 405 means HEAD method not allowed but server is reachable.
+# 429 means rate limited — server is up, just throttling us.
+EXTRA_VALID_STATUS_CODES = {401, 403, 405, 429}
 
 
 def extract_links_from_readme(filepath: str) -> List[Tuple[str, str]]:
@@ -79,14 +81,5 @@ def check_url(name: str, url: str, retries: int = RETRY_COUNT) -> Tuple[str, str
                     return (name, url, True, f"HTTP {status}")
                 return (name, url, False, f"HTTP {status}")
         except urllib.error.HTTPError as e:
-            if e.code in VALID_STATUS_CODES:
+            if e.code in VALID_STATUS_CODES or e.code in EXTRA_VALID_STATUS_CODES:
                 return (name, url, True, f"HTTP {e.code}")
-            # 405 means HEAD isn't allowed but the server is reachable; treat as valid
-            if e.code == 405:
-                return (name, url, True, f"HTTP {e.code} (HEAD not allowed, but reachable)")
-            # Auth-gated endpoints are still live links
-            if e.code in EXTRA_VALID_STATUS_CODES:
-                return (name, url, True, f"HTTP {e.code} (auth required, but reachable)")
-            if attempt < retries:
-                time.sleep(1)
-        
