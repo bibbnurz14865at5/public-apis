@@ -54,6 +54,13 @@ def validate_row(line_num: int, cells: List[str]) -> List[str]:
             f"Line {line_num}: Description for '{api_name}' should not end with punctuation."
         )
 
+    # Flag descriptions that are suspiciously short -- likely placeholder or incomplete.
+    # I kept seeing entries like "An API" slip through, so adding a minimum length check.
+    if description and len(description) < 10:
+        errors.append(
+            f"Line {line_num}: Description for '{api_name}' seems too short (< 10 chars)."
+        )
+
     # Strip markdown link from auth if present
     auth_clean = re.sub(r"\[.*?\]\(.*?\)", "", auth).strip()
     if auth_clean not in VALID_AUTH_VALUES:
@@ -80,18 +87,4 @@ def validate_row(line_num: int, cells: List[str]) -> List[str]:
 def validate_readme(path: str = README_PATH) -> int:
     """Validate all entries in the README. Returns number of errors found."""
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            content = f.read()
-    except FileNotFoundError:
-        print(f"ERROR: File not found: {path}")
-        return 1
-
-    rows = parse_table_rows(content)
-    all_errors = []
-
-    for line_num, cells in rows:
-        errors = validate_row(line_num, cells)
-        all_errors.extend(errors)
-
-    if all_errors:
-        f
+        with open(path, "r", encoding="utf-8") as
