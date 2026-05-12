@@ -17,6 +17,10 @@ VALID_AUTH_VALUES = {"", "apiKey", "OAuth", "X-Mashape-Key", "No"}
 VALID_HTTPS_VALUES = {"Yes", "No"}
 VALID_CORS_VALUES = {"Yes", "No", "Unknown"}
 
+# Minimum description length threshold. Raised from 10 to 15 because I kept
+# seeing entries like "An API for X" (11 chars) that were still too vague.
+MIN_DESCRIPTION_LENGTH = 15
+
 
 def parse_table_rows(content: str) -> List[Tuple[int, List[str]]]:
     """Extract table rows from README content with line numbers."""
@@ -56,9 +60,10 @@ def validate_row(line_num: int, cells: List[str]) -> List[str]:
 
     # Flag descriptions that are suspiciously short -- likely placeholder or incomplete.
     # I kept seeing entries like "An API" slip through, so adding a minimum length check.
-    if description and len(description) < 10:
+    if description and len(description) < MIN_DESCRIPTION_LENGTH:
         errors.append(
-            f"Line {line_num}: Description for '{api_name}' seems too short (< 10 chars)."
+            f"Line {line_num}: Description for '{api_name}' seems too short "
+            f"(< {MIN_DESCRIPTION_LENGTH} chars)."
         )
 
     # Strip markdown link from auth if present
@@ -77,14 +82,3 @@ def validate_row(line_num: int, cells: List[str]) -> List[str]:
 
     if cors not in VALID_CORS_VALUES:
         errors.append(
-            f"Line {line_num}: Invalid CORS value '{cors}' for '{api_name}'. "
-            f"Expected one of: {VALID_CORS_VALUES}"
-        )
-
-    return errors
-
-
-def validate_readme(path: str = README_PATH) -> int:
-    """Validate all entries in the README. Returns number of errors found."""
-    try:
-        with open(path, "r", encoding="utf-8") as
