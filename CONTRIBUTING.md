@@ -54,4 +54,4 @@ After you've created a branch on your fork with your changes, it's time to [make
 * The Description should not exceed 100 characters. If your description is too long, try summarizing
 
 <!-- Personal note: I'm using this fork mainly to track APIs relevant to my side projects.
-     Sections I find most useful: Weather, Finance, Open Data, and Machine Learning. -->
+     Sections I care most about: Weather, Finance, and Open Data. -->
