@@ -28,7 +28,8 @@ VALID_STATUS_CODES = set(range(200, 400))  # 2xx and 3xx
 # 429 means rate limited — server is up, just throttling us.
 # 503 added personally — some APIs return 503 under load but are still "up".
 # 999 added because LinkedIn returns 999 to block bots; the site is still reachable.
-EXTRA_VALID_STATUS_CODES = {401, 403, 405, 429, 503, 999}
+# 406 added because some APIs reject HEAD requests with "Not Acceptable" but are reachable.
+EXTRA_VALID_STATUS_CODES = {401, 403, 405, 406, 429, 503, 999}
 
 
 def extract_links_from_readme(filepath: str) -> List[Tuple[str, str]]:
@@ -81,5 +82,4 @@ def check_url(name: str, url: str, retries: int = RETRY_COUNT) -> Tuple[str, str
                 status = response.status
                 if status in VALID_STATUS_CODES:
                     return (name, url, True, f"HTTP {status}")
-                return (name, url, False, f"HTTP {status}")
-        except urllib.error.HTTPErro
+      
