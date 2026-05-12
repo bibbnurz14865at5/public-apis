@@ -27,7 +27,8 @@ VALID_STATUS_CODES = set(range(200, 400))  # 2xx and 3xx
 # 405 means HEAD method not allowed but server is reachable.
 # 429 means rate limited — server is up, just throttling us.
 # 503 added personally — some APIs return 503 under load but are still "up".
-EXTRA_VALID_STATUS_CODES = {401, 403, 405, 429, 503}
+# 999 added because LinkedIn returns 999 to block bots; the site is still reachable.
+EXTRA_VALID_STATUS_CODES = {401, 403, 405, 429, 503, 999}
 
 
 def extract_links_from_readme(filepath: str) -> List[Tuple[str, str]]:
@@ -81,22 +82,4 @@ def check_url(name: str, url: str, retries: int = RETRY_COUNT) -> Tuple[str, str
                 if status in VALID_STATUS_CODES:
                     return (name, url, True, f"HTTP {status}")
                 return (name, url, False, f"HTTP {status}")
-        except urllib.error.HTTPError as e:
-            if e.code in VALID_STATUS_CODES or e.code in EXTRA_VALID_STATUS_CODES:
-                return (name, url, True, f"HTTP {e.code}")
-            if attempt < retries:
-                time.sleep(1)
-                continue
-            return (name, url, False, f"HTTP {e.code}")
-        except urllib.error.URLError as e:
-            if attempt < retries:
-                time.sleep(1)
-                continue
-            return (name, url, False, f"URLError: {e.reason}")
-        except Exception as e:
-            if attempt < retries:
-                time.sleep(1)
-                continue
-            return (name, url, False, f"Error: {str(e)}")
-
-    return (name, url, False, "Max retries exceeded")
+        except urllib.error.HTTPErro
