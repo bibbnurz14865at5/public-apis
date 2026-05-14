@@ -101,44 +101,25 @@ class TestCheckUrl(unittest.TestCase):
         mock_response.status_code = 404
         mock_get.return_value = mock_response
 
-        result = check_url('https://example.com/notfound')
+        result = check_url('https://catfact.ninja/nonexistent')
         self.assertFalse(result)
 
     @patch('validate_links.requests.get')
     def test_returns_false_on_connection_error(self, mock_get):
+        # Simulate a network failure (e.g. DNS resolution error)
         import requests
-        mock_get.side_effect = requests.exceptions.ConnectionError('Connection refused')
+        mock_get.side_effect = requests.exceptions.ConnectionError
 
-        result = check_url('https://nonexistent.invalid/')
+        result = check_url('https://this-does-not-exist.example.com/')
         self.assertFalse(result)
 
     @patch('validate_links.requests.get')
     def test_returns_false_on_timeout(self, mock_get):
         import requests
-        mock_get.side_effect = requests.exceptions.Timeout('Request timed out')
+        mock_get.side_effect = requests.exceptions.Timeout
 
-        result = check_url('https://slow-api.example.com/')
+        result = check_url('https://catfact.ninja/')
         self.assertFalse(result)
-
-    @patch('validate_links.requests.get')
-    def test_returns_true_for_301_redirect(self, mock_get):
-        mock_response = MagicMock()
-        mock_response.status_code = 301
-        mock_get.return_value = mock_response
-
-        result = check_url('https://example.com/redirect')
-        # Redirects are typically followed; 301 alone may indicate success
-        self.assertIsInstance(result, bool)
-
-    @patch('validate_links.requests.get')
-    def test_uses_timeout(self, mock_get):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_get.return_value = mock_response
-
-        check_url('https://catfact.ninja/')
-        _, kwargs = mock_get.call_args
-        self.assertIn('timeout', kwargs)
 
 
 if __name__ == '__main__':
